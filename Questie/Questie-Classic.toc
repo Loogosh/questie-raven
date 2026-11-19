@@ -1,8 +1,8 @@
 ## Interface: 11402
-## Title: |cFFFFFFFFQuestie|r|cFFE07A1F Raven|r|cFF00FF00 v7.0.1|r
+## Title: |cFFFFFFFFQuestie|r|cFFE07A1F Raven|r|cFF00FF00 v7.0.2|r
 ## Author: Aero/Logon/Muehe/TheCrux(BreakBB)/Drejjmit/Dyaxler/Schaka/Zoey/Everyone else + Raven fork
 ## Notes: Questie 7.0 for RavenCraft 1.14.2 — wide IDs, High Elf/Goblin, Raven zones & Lua quest pack baked in
-## Version: 7.0.1
+## Version: 7.0.2
 ## RequiredDeps:
 ## OptionalDeps: Ace3, CallbackHandler-1.0, HereBeDragons, LibCompress, LibDataBroker-1.1, LibDBIcon-1.0, LibQuestXP, LibSharedMedia-3.0, LibStub, LibUIDropDownMenu
 ## SavedVariables: QuestieConfig

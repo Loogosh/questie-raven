@@ -865,6 +865,23 @@ function QuestieDB:GetQuest(questId) -- /dump QuestieDB:GetQuest(867)
             QO.ObjectiveData[1] = QO.ObjectiveData[2]
             QO.ObjectiveData[2] = tmp
         end
+
+        -- Raven/Turtle: some quests put reputation first in the quest log while DB
+        -- always appends reputation after kills (e.g. 60072 Trimming the Vilebranch).
+        if QuestieCorrections.reputationFirstQuestIDs and QuestieCorrections.reputationFirstQuestIDs[questId] then
+            local od = QO.ObjectiveData
+            local repIdx
+            for i, obj in ipairs(od) do
+                if obj and obj.Type == "reputation" then
+                    repIdx = i
+                    break
+                end
+            end
+            if repIdx and repIdx > 1 then
+                local rep = table.remove(od, repIdx)
+                table.insert(od, 1, rep)
+            end
+        end
     end
 
     -- Events need to be added at the end of ObjectiveData

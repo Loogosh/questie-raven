@@ -2,8 +2,8 @@
 ---@class RavenPack
 local RavenPack = QuestieLoader:CreateModule("RavenPack")
 local ns = RavenPack
-ns.version = "7.0.0"
-ns.build = "4f37fd79a59a+62229+41802at700+sw1519+swaffine1+snuff8139"
+ns.version = "7.0.2"
+ns.build = "4f37fd79a59a+62229+41802at700+sw1519+swaffine1+q60072rep"
 ns.questData = [[return {
 [2]={"Sharptalon's Claw",{nil,nil,{16305}},{{12696},nil},20,30,434,0,{"Bring Sharptalon's Claw to Senani Thunderheart at Splintertree Post, Ashenvale."},nil,{nil,nil,nil,nil,nil},16305,nil,{6383},nil,{23,24},nil,331,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
 [5]={"Jitters' Growling Gut",{{288},nil,nil},{{272},nil},17,20,589,0,{"Speak with Chef Grual."},nil,{nil,nil,nil,nil,nil},nil,nil,{163},nil,nil,nil,10,nil,nil,nil,nil,93,nil,nil,nil,nil,nil},
@@ -5445,7 +5445,7 @@ ns.questData = [[return {
 [60065]={"Terror of the Webweavers",{{51536},nil,nil},{{11034},nil},58,60,nil,0,{"Cleanse the Terrorweb tunnel and report back to Mal'adris at the bridge connecting the Western and Eastern Plaguelands."},nil,{{{8556,nil},{8555,nil},{8557,nil},{8558,nil}},nil,nil,nil,nil},nil,nil,nil,nil,nil,nil,139,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
 [60070]={"[DEPRECATED] Matter of Trust",{nil,nil,nil},{nil,nil},6,7,589,0,{"Bring 5 Chunks of Boar Meat, 3 Dwarven Mild Cheese and 1 Chew Toy to Kelton's Riding Gryphon in the Goldshire."},nil,{nil,nil,{{769,nil},{422,nil},{51751,nil}},nil,nil},nil,nil,nil,nil,nil,nil,1519,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
 [60071]={"Cracking the Witherbark",{{51566},nil,nil},{{51566},nil},42,42,589,0,{"Slay 10 Witherbark Scalpers, 10 Witherbark Zealots and 5 Witherbark Venombloods. Return to Drakin in Aerie Peak when done."},nil,{{{2649,nil},{2650,nil},{2652,nil}},nil,nil,nil,nil},nil,nil,nil,nil,nil,nil,47,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
-[60072]={"Trimming the Vilebranch",{{51566},nil,nil},{{51566},nil},42,46,589,0,{"Slay 15 Witherbark Soothsayers and 30 Vilebranch Scalpers. Return to Drakin in Aerie Peak, when done."},nil,{{{4467,nil},{4466,nil}},nil,nil,nil,nil},nil,nil,{60071},nil,nil,nil,47,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
+[60072]={"Trimming the Vilebranch",{{51566},nil,nil},{{51566},nil},42,46,589,0,{"Slay 15 Witherbark Soothsayers and 30 Vilebranch Scalpers. Return to Drakin in Aerie Peak, when done."},nil,{{{4467,nil},{4466,nil}},nil,nil,{471,3000},nil},nil,nil,{60071},nil,nil,nil,47,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
 [60073]={"Decimate Their Ranks",{{51566},nil,nil},{{51566},nil},42,50,589,0,{"Slay 20 Vilebranch Berserkers, Vilebranch Shadow Hunters, Vilebranch Blood Drinkers and Vilebranch Soul Eaters. Return to Drakir in Aerie Peak when done."},nil,{{{2643,nil},{2645,nil},{2646,nil},{2647,nil}},nil,nil,nil,nil},nil,nil,{60072},nil,nil,nil,354,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
 [60074]={"Bring Down the Priestess!",{{51566},nil,nil},{{51566},nil},42,50,589,0,{"Slay 20 Vilebranch Aman'zasi Guard and the Vile Priestess Hexx. Return to Drakir in Aerie Peak when done."},nil,{{{2648,nil},{7995,nil}},nil,nil,nil,nil},nil,nil,{60072},nil,nil,nil,354,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},
 [60104]={"Into the Unknown [Deprecated]",{nil,nil,nil},{nil,nil},1,5,nil,0,{"Test Portable Wormhole Generator."},nil,{{{51573,nil}},nil,nil,nil,nil},nil,nil,nil,nil,nil,nil,2255,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil},

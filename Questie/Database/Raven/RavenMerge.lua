@@ -159,74 +159,129 @@ local function applyObjectImport()
 end
 
 --- Stormwind on Raven: classic pack % → Raven % via affine, then manual overrides.
---- Also drops bogus dual 5581 pins that spill onto the city map.
+--- Never promote area 5581 (Northwind) → 1519: pack duals like Searing Gorge [51]+[5581]
+--- were getting affine'd onto Stormwind (Fiery Menace / Greater Lava Spider spill).
+--- Bogus dual 5581 (entity also has other zones, no 1519) is stripped.
 local function applyStormwindNpcFixes()
     if not (QuestieDB and RavenStormwindFixes) then
-        return 0, 0
+        return 0, 0, 0
     end
     local SW, NW = 1519, 5581
     local stamp = RavenStormwindFixes.affine1519 and RavenStormwindFixes.affine1519.stamp
-    local nAff, nMan = 0, 0
+    local nAff, nMan, nStrip = 0, 0, 0
+
+    local function keysFor(kind)
+        return kind == "npc" and QuestieDB.npcKeys or QuestieDB.objectKeys
+    end
+
+    local function dataFor(kind)
+        return kind == "npc" and QuestieDB.npcData or QuestieDB.objectData
+    end
+
+    local function oversKey(kind)
+        return kind == "npc" and "npcDataOverrides" or "objectDataOverrides"
+    end
+
+    local function readSpawns(kind, id)
+        local Keys = keysFor(kind)
+        if not (Keys and Keys.spawns) then return nil end
+        local overs = QuestieDB[oversKey(kind)]
+        local ov = overs and overs[id]
+        if type(ov) == "table" and type(ov[Keys.spawns]) == "table" then
+            return ov[Keys.spawns]
+        end
+        local row = dataFor(kind) and dataFor(kind)[id]
+        if type(row) == "table" and type(row[Keys.spawns]) == "table" then
+            return row[Keys.spawns]
+        end
+        if kind == "npc" and QuestieDB.QueryNPCSingle then
+            return QuestieDB.QueryNPCSingle(id, "spawns")
+        end
+        if kind == "object" and QuestieDB.QueryObjectSingle then
+            return QuestieDB.QueryObjectSingle(id, "spawns")
+        end
+        return nil
+    end
+
+    local function writeSpawns(kind, id, spawns)
+        local Keys = keysFor(kind)
+        if not (Keys and Keys.spawns) then return end
+        local row = dataFor(kind) and dataFor(kind)[id]
+        if type(row) == "table" then
+            row[Keys.spawns] = spawns
+        end
+        QuestieDB[oversKey(kind)] = QuestieDB[oversKey(kind)] or {}
+        QuestieDB[oversKey(kind)][id] = QuestieDB[oversKey(kind)][id] or {}
+        QuestieDB[oversKey(kind)][id][Keys.spawns] = spawns
+    end
 
     local function patchEntity(kind, id, pts)
-        local Keys = kind == "npc" and QuestieDB.npcKeys or QuestieDB.objectKeys
-        local data = kind == "npc" and QuestieDB.npcData or QuestieDB.objectData
-        local overs = kind == "npc" and "npcDataOverrides" or "objectDataOverrides"
-        if not Keys or not Keys.spawns then return end
-        local function patchSpawns(spawns, list)
-            if type(spawns) ~= "table" then spawns = {} end
-            spawns[SW] = list
-            spawns[NW] = nil
-            return spawns
-        end
-        local row = data and data[id]
-        if type(row) == "table" then
-            row[Keys.spawns] = patchSpawns(row[Keys.spawns], pts)
-        end
-        QuestieDB[overs] = QuestieDB[overs] or {}
-        QuestieDB[overs][id] = QuestieDB[overs][id] or {}
-        local ov = QuestieDB[overs][id]
-        local base = ov[Keys.spawns]
-        if type(base) ~= "table" and type(row) == "table" then base = row[Keys.spawns] end
-        if type(base) ~= "table" and kind == "npc" and QuestieDB.QueryNPCSingle then
-            base = QuestieDB.QueryNPCSingle(id, "spawns")
-        end
-        if type(base) ~= "table" and kind == "object" and QuestieDB.QueryObjectSingle then
-            base = QuestieDB.QueryObjectSingle(id, "spawns")
-        end
+        local Keys = keysFor(kind)
+        if not (Keys and Keys.spawns) then return end
+        local base = readSpawns(kind, id)
         local copy = {}
         if type(base) == "table" then
             for z, list in pairs(base) do copy[z] = list end
         end
-        ov[Keys.spawns] = patchSpawns(copy, pts)
+        copy[SW] = pts
+        copy[NW] = nil
+        writeSpawns(kind, id, copy)
     end
 
-    -- 1) Affine every pack NPC/object that has classic 1519 (or only 5581 dual).
+    local function stripBogusNorthwind(kind, id, packSpawns)
+        if type(packSpawns) ~= "table" or type(packSpawns[NW]) ~= "table" then return false end
+        if type(packSpawns[SW]) == "table" and #packSpawns[SW] > 0 then return false end
+        local hasOther = false
+        for z, list in pairs(packSpawns) do
+            if z ~= NW and type(list) == "table" and #list > 0 then
+                hasOther = true
+                break
+            end
+        end
+        if not hasOther then return false end
+        local base = readSpawns(kind, id)
+        if type(base) ~= "table" or base[NW] == nil then return false end
+        local copy = {}
+        for z, list in pairs(base) do
+            if z ~= NW then copy[z] = list end
+        end
+        -- Also drop any stray 1519 left by older promote-from-5581 builds.
+        copy[SW] = nil
+        writeSpawns(kind, id, copy)
+        return true
+    end
+
+    -- 1) Affine only real Stormwind pack rows (area 1519). Never promote 5581 → 1519.
     -- Always re-apply from PACK classic %: overrides live only in memory and die on /reload,
     -- while ravenSWAffine stamp in SavedVariables would otherwise skip and leave classic pins.
     if RavenStormwindFixes.TransformList and stamp and ns.npcData then
         local function runPack(chunkKey, kind, spawnIdx)
             local chunk = ns[chunkKey] and loadstring(ns[chunkKey])
             local pack = chunk and chunk()
-            if type(pack) ~= "table" then return 0 end
-            local n = 0
+            if type(pack) ~= "table" then return 0, 0 end
+            local n, s = 0, 0
             for id, row in pairs(pack) do
                 local spawns = type(row) == "table" and row[spawnIdx]
                 if type(spawns) == "table" then
-                    local src = spawns[SW] or spawns[NW]
+                    local src = spawns[SW]
                     if type(src) == "table" and #src > 0 then
                         local pts = RavenStormwindFixes.TransformList(src)
                         patchEntity(kind, id, pts)
                         n = n + 1
+                    elseif stripBogusNorthwind(kind, id, spawns) then
+                        s = s + 1
                     end
                 end
             end
-            return n
+            return n, s
         end
         -- RavenPack npcKeys.spawns = 7, objectKeys.spawns = 4 (see ns.questieKeys)
-        nAff = runPack("npcData", "npc", 7) + runPack("objectData", "object", 4)
+        local n1, s1 = runPack("npcData", "npc", 7)
+        local n2, s2 = runPack("objectData", "object", 4)
+        nAff = n1 + n2
+        nStrip = s1 + s2
         local g = Questie and Questie.db and Questie.db.global
-        if g then g.ravenSWAffine = stamp end
+        if g then g.ravenSWAffine = stamp .. "+no5581promote" end
     end
 
     -- 2) Manual measured overrides win (already Raven %).
@@ -239,7 +294,7 @@ local function applyStormwindNpcFixes()
             end
         end
     end
-    return nAff, nMan
+    return nAff, nMan, nStrip
 end
 
 function RavenMerge:ShouldRecompile()
@@ -684,9 +739,9 @@ function RavenMerge:MergeBaseDB()
     if oZones > 0 or oItems > 0 then
         added[#added + 1] = "objImport zones=" .. oZones .. " itemO=" .. oItems
     end
-    local swAff, swMan = applyStormwindNpcFixes()
-    if (swAff or 0) > 0 or (swMan or 0) > 0 then
-        added[#added + 1] = "swAffine " .. tostring(swAff or 0) .. "+man " .. tostring(swMan or 0)
+    local swAff, swMan, swStrip = applyStormwindNpcFixes()
+    if (swAff or 0) > 0 or (swMan or 0) > 0 or (swStrip or 0) > 0 then
+        added[#added + 1] = "swAffine " .. tostring(swAff or 0) .. "+man " .. tostring(swMan or 0) .. "+stripNW " .. tostring(swStrip or 0)
     end
     local ei = applyExploreImport()
     if (ei or 0) > 0 then
@@ -694,6 +749,23 @@ function RavenMerge:MergeBaseDB()
     end
     RavenMerge:MarkCompiled()
     -- merge summary kept in `added` / packStamp for ShouldRecompile; no chat spam on login
+end
+
+local function applyQuestObjectiveFixes()
+    if not QuestieCorrections then return end
+    -- 60072 Trimming the Vilebranch: client LB = Wildhammer rep, then 2 kills.
+    -- Pack had only kills → Questie ERROR "Missing objective data … objective 0".
+    QuestieCorrections.reputationFirstQuestIDs = QuestieCorrections.reputationFirstQuestIDs or {}
+    QuestieCorrections.reputationFirstQuestIDs[60072] = true
+    if QuestieDB and QuestieDB.questKeys and QuestieDB.questData and QuestieDB.questData[60072] then
+        local qk = QuestieDB.questKeys
+        local row = QuestieDB.questData[60072]
+        -- objectives: kills + Wildhammer Clan (471) Friendly (3000)
+        row[qk.objectives] = { { { 4467 }, { 4466 } }, nil, nil, { 471, 3000 }, nil }
+        if QuestieDB.questCache then
+            QuestieDB.questCache[60072] = nil
+        end
+    end
 end
 
 function RavenMerge:Bootstrap()
@@ -707,10 +779,13 @@ function RavenMerge:Bootstrap()
     hookPreCompile()
     -- Explore/areatrigger pins from pfQuest 1.18 (RavenExploreImport).
     applyExploreImport()
+    applyQuestObjectiveFixes()
     applyStormwindNpcFixes()
     if C_Timer and C_Timer.After then
         C_Timer.After(1, applyExploreImport)
         C_Timer.After(5, applyExploreImport)
+        C_Timer.After(1, applyQuestObjectiveFixes)
+        C_Timer.After(5, applyQuestObjectiveFixes)
         C_Timer.After(1, applyStormwindNpcFixes)
         C_Timer.After(5, applyStormwindNpcFixes)
     end

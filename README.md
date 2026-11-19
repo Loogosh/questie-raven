@@ -1,6 +1,6 @@
 # Questie Raven
 
-Addon: `Questie` · Interface **11402** · Version **7.0.1**
+Addon: `Questie` · Interface **11402** · Version **7.0.2**
 
 ## About
 
@@ -24,3 +24,4 @@ If you find a problem, open an **Issue** in this repository:
 ## Install
 
 Copy `Questie` into `Interface\AddOns`, then `/reload`. The first login after install may recompile the database once (temporary lag).
+
